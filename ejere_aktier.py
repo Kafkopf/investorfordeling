@@ -7,53 +7,51 @@ import operator
 def sum_of_markedsvaerdi():
 	investor_dict = dict()
 	sum_investor_dict = dict()
-	with open('fondskode_201608_test.csv', 'r') as csvfile:
+	husholdning_dict = dict()
+	pct_investor_dict = dict()
+	
+	with open('fondskode_201608.csv', 'r') as csvfile:
 		next(csvfile)
 		reader = csv.reader(csvfile, delimiter=';')
+
 		#SAMLER ALLE MARKEDSVARDI I DICT PR PAPIRNAVN
 		for row in reader:
 			if row[3] in investor_dict:
 				investor_dict[row[3]].append(float(row[11].replace(',','.')))
 			else:
 				investor_dict[row[3]] = [float(row[11].replace(',','.'))]
+
 		#SUMMERER ALLE MARKEDSVAERDI PR PAPIRNAVN
 		for item in investor_dict:
 			sum_investor_dict[item] = sum(investor_dict[item])
-		print (sum_investor_dict)
 	
+		#LAVER DICT MED HUSHOLDNINGERE	
+	with open('fondskode_201608.csv', 'r') as csvfile:
+		next(csvfile)
+		reader = csv.reader(csvfile, delimiter=';')
+		for row in reader:
+			if row[9] == "1.5.0. Husholdninger, inkl. non-profit institutioner rettet mod hush.":
+				husholdning_dict[row[3]] = float(row[11].replace(',','.'))
 
+		#DIVIDERER DE TO DICTS FOR AT FÅ PCT SOM HUSHOLDNINGER UDGØR AF DE SAMLEDE INVESTERINGER
+		for k in husholdning_dict:
+			if sum_investor_dict[k] > 0:
+				pct_investor_dict[k] = float(husholdning_dict[k] / sum_investor_dict[k] * 100)
 
-
-
+		#SORTERER EFTER HØJESTE PCT
+	sorted_investor_list = sorted(pct_investor_dict.items(), key=operator.itemgetter(1), reverse=True)
+	sorted_investor_tuple = tuple(sorted_investor_list)
+	
+		#SKRIVER TIL CSV-FIL
+	with open('outfile.csv','wb') as out:
+	    writer = csv.writer(out, delimiter=';')
+	    writer.writerows(sorted_investor_tuple)
+	out.close()
+	csvfile.close()
 
 sum_of_markedsvaerdi()
 
 
-'''
-		#LAVER 	DICT MED EJERNAVN OG KØBESUM
-		for row in reader:
-			try:
-				if row[9] in ejer_dict:
-					ejer_dict[row[9]].append(float(row[15]))
-				else:
-					ejer_dict[row[9]] = [float(row[15])]
-			except:
-				ejer_dict[row[9]] = [float(0)]
-		#SUMMERER ALLE KØBESUMME PR EJERNAVN
-		for item in ejer_dict:
-			sorted_ejer_dict[item] = sum(ejer_dict[item])
-		#SORTERER EFTER STØRSTE SAMLEDE KØBESUM
-		sorted_ejer_list = sorted(sorted_ejer_dict.items(), key=operator.itemgetter(1), reverse=True)
-		sorted_ejer_tuple = tuple(sorted_ejer_list)
-		#SKRIVER TIL CSV-FIL
-		with open('outfile.csv','wb') as out:
-		    writer = csv.writer(out, delimiter=';')
-		    writer.writerows(sorted_ejer_tuple)
-			
-		out.close()    	
-	csvfile.close()
-
-'''
 '''
 Frekvens;Reference periode;ISIN_kode;papirnavn;Vardipapirtype;Valuta;Restlobetid;Renter;Udstedersektor;Investorsektor;nominel;markedsvaerdi;ejerkoncentration;Fortroligt
 Manedlig;201608;DK0002000421;6,00% UNIKREDIT ANN 1993 2026;Obligationer, noterede;Danske kroner;restlobetid>1 ar (inkl. uendelig lobetid);5% < kupon <= 6%;MFI - Realkreditinstitutter;1.4.0. Offentlig forvaltning og service;0,997991;1,102780055;M;
